@@ -1,5 +1,5 @@
-//#ifndef Game
-//#define Game
+#ifndef Game_h
+#define Game_h
 
 #include <SFML/Graphics.hpp>
 #include <iostream>
@@ -24,6 +24,7 @@ private:
     sf::Vector2i mousePosWindow ; // position of mouse relative to window
     sf::Vector2f mousePosView;
 
+
     /* Fonts */
     sf::Font font;
 
@@ -32,6 +33,8 @@ private:
 
     /* Game logic */
 
+    struct Button{bool left , right  , space ;};
+    Button button;
     unsigned score; 
     float enemySpwanTimer;
     float enemySpawnTimerMax;
@@ -47,11 +50,21 @@ private:
     void initEnemy();
     void initFont();
     void initText();
+    void initPlayer();
+    void initShoot();
+    void calculateScore(int i); 
     
 
     /* Game objects */
     sf::RectangleShape enemie;
+    sf::Texture plane;
+    sf::Sprite sprite;
     std::vector <sf::RectangleShape> enemies;
+    sf::Texture player_texture;
+    sf::Sprite player;
+    sf::Vector2i size_player;
+    sf::RectangleShape shoot;
+    std::vector <sf::RectangleShape> shoots;
 
 public:
 
@@ -75,11 +88,16 @@ public:
     void updateEnemies(); 
     void updateText();
     void updateEnergy();
+    void updatePlayer();
+    void updateShoots();
+    void generateShoots();
 
     // runder sub functions
     void renderEnemies();
     void renderText(sf::RenderTarget &target); /// to be able to render it on any target (not only window)
+    void renderPlayer();
+    void renderShoots();
 };
 
 
-//#endif
+#endif

@@ -17,7 +17,6 @@ int main()
     {
         // Input() 
         game.input();
-        
 
         // update()  = logic 
         game.update();

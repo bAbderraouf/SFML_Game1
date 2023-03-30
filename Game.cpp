@@ -22,10 +22,22 @@
         this->health = 20;
         this->energy = 0;
 
+        this->button.left = false;
+        this->button.right = false;
+        this->button.space = false;
 
         this->initEnemy();
         this->initFont();
         this->initText();
+        this->initPlayer();
+        this->initShoot();
+
+        this->plane.loadFromFile("fight_plane_1.png");
+        this->sprite.setTexture(this->plane);
+        this->sprite.setScale(sf::Vector2f(0.2f, 0.2f));
+        this->sprite.setPosition(sf::Vector2f(100.f, 100.f));
+        this->sprite.setColor(sf::Color::Red);
+
     }
 
     void Game::initWindow()
@@ -59,6 +71,45 @@
         //this->guiText.setOutlineColor(sf::Color::White);
         // this->guiText.setOutlineThickness(1.f);
         this->guiText.setString(""); // initialised to nothing
+
+    }
+
+    void Game::initPlayer()
+    {
+        
+/*
+        this->player.setPosition(sf::Vector2f( posyPlayer , posxPlayer));
+        this->player.setSize(sf::Vector2f(lPlayer , hPlayer));
+       // this->player.setScale(sf::Vector2f(0.5f, 0.5f)); // 50% of its orignal size
+        this->player.setFillColor(sf::Color::Blue);
+        this->player.setOutlineColor(sf::Color::Blue);
+        this->player.setOutlineThickness(2.f); 
+*/
+        // player as a plane:
+        this->player_texture.loadFromFile("player.png");
+        this->player.setTexture(this->player_texture);
+        this->player.setScale(sf::Vector2f(0.2f, 0.2f));
+        this->player.setColor(sf::Color::Green);    
+
+        int hPlayer = this->player.getTexture()->getSize().y * player.getScale().y ,
+         lPlayer = this->player.getTexture()->getSize().x * player.getScale().x ;
+        
+        this->size_player.x = lPlayer;
+        this->size_player.y = hPlayer;
+        
+        float posxPlayer = this->videoMode.height - hPlayer - 5 ;
+        float posyPlayer = (this->videoMode.width - lPlayer) / 2 ;
+
+        this->player.setPosition(sf::Vector2f( posyPlayer , posxPlayer));
+    
+    }
+
+    void Game::initShoot()
+    {
+        this->shoot.setSize(sf::Vector2f(3.f , 3.f));
+        this->shoot.setFillColor(sf::Color::Yellow);
+        this->shoot.setOutlineColor(sf::Color::Yellow);
+        this->shoot.setOutlineThickness(0.f); 
 
     }
 
@@ -120,6 +171,39 @@
                         this->fenetre->close();
                         break;
                     }
+                    if(this->evnt.key.code == sf::Keyboard::Left)
+                    {
+                        this->button.left = true;
+                        break;
+                    }
+                    if(this->evnt.key.code == sf::Keyboard::Right)
+                    {
+                        this->button.right = true;
+                        break;
+                    }
+                    if(this->evnt.key.code == sf::Keyboard::Space)
+                    {
+                        this->button.space = true;
+                        break;
+                    }
+              
+
+                case sf::Event::KeyReleased :
+                    if(this->evnt.key.code == sf::Keyboard::Left)
+                    {
+                        this->button.left = false;
+                        break;
+                    }
+                    if(this->evnt.key.code == sf::Keyboard::Right)
+                    {
+                        this->button.right = false;
+                        break;
+                    }
+                    if(this->evnt.key.code == sf::Keyboard::Space)
+                    {
+                        this->button.space = false;
+                        break;
+                    }
             }
         }
 
@@ -141,8 +225,11 @@
         {
             this->updateMousePosition(); 
             this->updateEnemies();
+            this->updatePlayer();
             this->updateText();
             this->updateEnergy();
+            this->updateShoots();
+            
         }
         
         if(this->health <= 0)
@@ -166,6 +253,8 @@
         //this->fenetre->draw(this->enemie);  // we draw an enemy
         
         this->renderEnemies();
+        this->renderPlayer();
+        this->renderShoots();
         this->renderText(*this->fenetre); // render text on window target
 
         // display the new window
@@ -259,18 +348,7 @@
                         {
                             deleted_flag = true;
 
-                                // caculate score
-                            unsigned additionalScore = 0;
-                            float enemyScale = this->enemies[i].getScale().x;
-                           
-                            if( enemyScale <= 0.3)
-                                additionalScore = 5;
-                            else if (enemyScale > 0.3 && enemyScale <= 0.5)
-                                additionalScore = 3;
-                            else
-                                additionalScore = 1;
-                            
-                            this->score += additionalScore;
+                            calculateScore(i);
 
                                 // delete the enemy
                             this->enemies.erase( this->enemies.begin() + i );
@@ -298,10 +376,124 @@
             }
        }
 
-       //std::cout << "score = " << this->score << ", health = " << this->health << std::endl;
     }
 
-    void Game::updateText()
+    void Game::updatePlayer()
+    {
+        /*
+            Waiting for key pressed (left and right and space for shoot)
+            define boundaries for player positions        
+        */
+        float pas = 15.f;
+
+        // mouve left
+
+        if(this->button.left)
+        {
+            if( (this->player.getPosition().x - pas) <= 0 )
+                this->player.setPosition(0 , this->player.getPosition().y);
+            else
+                this->player.move(-pas , 0.f);
+            
+            
+        }
+        // move right
+        if(this->button.right)
+        {
+             // remark :  this->player.getSize().x = this->player.getTexture()->getSize().x * player.getScale().x
+            if(this->player.getPosition().x + pas >= (this->videoMode.width - (this->player.getTexture()->getSize().x * player.getScale().x) )) 
+                this->player.setPosition( (this->videoMode.width - (this->player.getTexture()->getSize().x * player.getScale().x)) , this->player.getPosition().y);
+            else 
+                this->player.move( pas , 0.f);             
+        }
+
+    }
+
+    void Game::generateShoots()
+    {
+
+        if(this->button.space )
+        {
+            this->shoot.setPosition(this->player.getPosition().x + (this->size_player.x/2) , this->player.getPosition().y + 5);
+            shoots.push_back(shoot);        
+        }
+    }
+
+    void Game::updateShoots()
+    {
+        /*
+            generate shoots
+            move shoots to up
+            dell shoot if its is out of the screen 
+            to do : if a shoot colide with an enemy => dell the enemy
+                ycondition, xcondition
+            
+            xPlayerColisionCondition
+            yPlayerColisionCondition
+            check if an enmy touched the player then health -= 1
+        
+        */
+
+        // genrate shoots
+        generateShoots();
+
+        float pas = 15.f;
+        bool yCondition = false , xCondition = false , 
+            yplayerColisionCondition = false , xplayerColisionCondition =false;
+        
+        for(int i = 0 ; i < this->shoots.size() ; i++)
+        {
+            // dell shoot if its out of screan
+            if( this->shoots[i].getPosition().y + pas <= 0)
+            {
+                this->shoots.erase(shoots.begin() + i);
+            }
+            // move shoots
+            else
+                this->shoots[i].move(0.f , -pas); 
+
+            // colision management
+            // for each shoot check if it touchs any enemy
+
+            for(int j = 0 ; j <this->enemies.size() ; j++)
+            {
+               // std::cout << "enmy size before : " <<this->enemies.size() << std::endl;
+                
+                yCondition = ( this->shoots[i].getPosition().y <=  this->enemies[j].getPosition().y + this->enemies[j].getSize().y  && 
+                                this->shoots[i].getPosition().y >=  this->enemies[j].getPosition().y );
+                xCondition = ( this->shoots[i].getPosition().x >= this->enemies[j].getPosition().x  &&  
+                                this->shoots[i].getPosition().x <=  this->enemies[j].getPosition().x +  this->enemies[j].getSize().x );
+                
+                yplayerColisionCondition = ( this->player.getPosition().y <=  this->enemies[j].getPosition().y + this->enemies[j].getSize().y  );
+                xplayerColisionCondition = ( this->player.getPosition().x + (this->player.getTexture()->getSize().x * player.getScale().x) >=  this->enemies[j].getPosition().x  && 
+                                this->player.getPosition().x <  this->enemies[j].getPosition().x +  this->enemies[j].getSize().x );
+
+                if(  xCondition && yCondition )
+                {
+                    this->enemies.erase( this->enemies.begin() + j) ;
+                    this->shoots.erase( this->shoots.begin() + i);
+
+                    // update score value
+                    calculateScore(j);
+                        
+                }
+                // check if any enemy touched the player
+                if( yplayerColisionCondition && xplayerColisionCondition)
+                {
+                    this->enemies.erase( this->enemies.begin() + j) ;
+                    health += -1;
+                }
+            }
+
+
+        }
+
+        
+        
+        
+    }
+
+    void Game:: updateText()
     {   
          // way1
         std::stringstream ss;
@@ -337,9 +529,44 @@
         {
             this->fenetre->draw(e);
         }
+        this->fenetre->draw(sprite);
+    }
+
+    void Game::renderPlayer()
+    {
+        this->fenetre->draw(this->player);
     }
 
     void Game::renderText(sf::RenderTarget &target)
     {   
         target.draw(guiText);  // draw the text on the selected target (ex: window or other targets)
+    }
+
+    void Game::renderShoots()
+    {
+        for (auto &s : this->shoots)
+        {
+            this->fenetre->draw(s);
+        }
+    }
+
+
+    void Game::calculateScore(int i)
+    {
+        /*
+            update score value,
+            i : is the index of the deleted enemy (shooted enemy)
+        */
+            // caculate score
+        unsigned additionalScore = 0;
+        float enemyScale = this->enemies[i].getScale().x;
+        
+        if( enemyScale <= 0.3)
+            additionalScore = 5;
+        else if (enemyScale > 0.3 && enemyScale <= 0.5)
+            additionalScore = 3;
+        else
+            additionalScore = 1;
+        
+        this->score += additionalScore;
     }
