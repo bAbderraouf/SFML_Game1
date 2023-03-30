@@ -56,13 +56,14 @@ private:
     
 
     /* Game objects */
-    sf::RectangleShape enemie;
-    sf::Texture plane;
-    sf::Sprite sprite;
-    std::vector <sf::RectangleShape> enemies;
+    sf::Texture enemie_texture;
+    sf::Sprite enemie;
+    std::vector <sf::Sprite> enemies;
+
     sf::Texture player_texture;
     sf::Sprite player;
     sf::Vector2i size_player;
+
     sf::RectangleShape shoot;
     std::vector <sf::RectangleShape> shoots;
 

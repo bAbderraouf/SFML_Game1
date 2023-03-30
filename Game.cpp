@@ -32,12 +32,6 @@
         this->initPlayer();
         this->initShoot();
 
-        this->plane.loadFromFile("fight_plane_1.png");
-        this->sprite.setTexture(this->plane);
-        this->sprite.setScale(sf::Vector2f(0.2f, 0.2f));
-        this->sprite.setPosition(sf::Vector2f(100.f, 100.f));
-        this->sprite.setColor(sf::Color::Red);
-
     }
 
     void Game::initWindow()
@@ -48,13 +42,27 @@
 
     void Game::initEnemy()
     {
+        /* rectangles enmeies 
         this->enemie.setPosition(sf::Vector2f(10.f , 10.f));
         this->enemie.setSize(sf::Vector2f(100.f , 100.f));
         this->enemie.setScale(sf::Vector2f(0.5f, 0.5f)); // 50% of its orignal size
         this->enemie.setFillColor(sf::Color::Blue);
         this->enemie.setOutlineColor(sf::Color::White);
         this->enemie.setOutlineThickness(2.f); 
+       */
+
+        /* for texture enemy*/
+
+        this->enemie_texture.loadFromFile("fight_plane_1.png");
+        this->enemie.setTexture(this->enemie_texture);
+        this->enemie.setScale(sf::Vector2f(0.01f, 0.01f));
+        this->enemie.setColor(sf::Color::Red);
         
+        int hEnemie = this->enemie.getTexture()->getSize().y * enemie.getScale().y ,
+         lEnemie = this->enemie.getTexture()->getSize().x * enemie.getScale().x ;
+
+        this->enemie.setPosition(sf::Vector2f(20.f, 20.f));
+    
     }
 
     void Game::initFont()
@@ -281,21 +289,21 @@
             -add enemy to the vector
         */
 
-       this->enemie.setPosition(
-        static_cast<float> (rand() % static_cast<int>(this->fenetre->getSize().x - this->enemie.getSize().x) ) ,
-        0.f 
-       );
 
-       this->enemie.setFillColor(sf::Color(
+       this->enemie.setColor(sf::Color(
         static_cast<int>(rand() % 255 ), 
         static_cast<int>(rand() % 255 ),
         static_cast<int>(rand() % 255 ), 255 ) 
         );
         
         // random scale if wanted
-        float sizeEnemy , minSize = 0.2;
+        float sizeEnemy , minSize = 0.5;
         sizeEnemy = (static_cast<float>(rand() % 80) / 100) + minSize;
-        this->enemie.setScale(sf::Vector2f( sizeEnemy , sizeEnemy));
+        this->enemie.setScale(sf::Vector2f( 0.3*sizeEnemy , 0.3*sizeEnemy));
+
+
+        this->enemie.setPosition(
+        static_cast<float> (rand() % static_cast<int>(this->fenetre->getSize().x - sizeEnemy*0.3*this->enemie_texture.getSize().x) ) , 0.f );
         
         // spawn the enemy
         this->enemies.push_back(enemie);
@@ -459,14 +467,14 @@
             {
                // std::cout << "enmy size before : " <<this->enemies.size() << std::endl;
                 
-                yCondition = ( this->shoots[i].getPosition().y <=  this->enemies[j].getPosition().y + this->enemies[j].getSize().y  && 
+                yCondition = ( this->shoots[i].getPosition().y <=  this->enemies[j].getPosition().y + (this->enemies[j].getTexture()->getSize().y * this->enemies[j].getScale().y)  && 
                                 this->shoots[i].getPosition().y >=  this->enemies[j].getPosition().y );
                 xCondition = ( this->shoots[i].getPosition().x >= this->enemies[j].getPosition().x  &&  
-                                this->shoots[i].getPosition().x <=  this->enemies[j].getPosition().x +  this->enemies[j].getSize().x );
+                                this->shoots[i].getPosition().x <=  this->enemies[j].getPosition().x +  (this->enemies[j].getTexture()->getSize().x * this->enemies[j].getScale().x) );
                 
-                yplayerColisionCondition = ( this->player.getPosition().y <=  this->enemies[j].getPosition().y + this->enemies[j].getSize().y  );
+                yplayerColisionCondition = ( this->player.getPosition().y <=  this->enemies[j].getPosition().y + (this->enemies[j].getTexture()->getSize().y * this->enemies[j].getScale().y)  );
                 xplayerColisionCondition = ( this->player.getPosition().x + (this->player.getTexture()->getSize().x * player.getScale().x) >=  this->enemies[j].getPosition().x  && 
-                                this->player.getPosition().x <  this->enemies[j].getPosition().x +  this->enemies[j].getSize().x );
+                                this->player.getPosition().x <  this->enemies[j].getPosition().x + (this->enemies[j].getTexture()->getSize().x * this->enemies[j].getScale().x) );
 
                 if(  xCondition && yCondition )
                 {
@@ -529,7 +537,6 @@
         {
             this->fenetre->draw(e);
         }
-        this->fenetre->draw(sprite);
     }
 
     void Game::renderPlayer()
